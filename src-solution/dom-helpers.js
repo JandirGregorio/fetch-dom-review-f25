@@ -1,9 +1,9 @@
 const errorMessage = document.querySelector('#error-message');
+const detailsSection = document.querySelector('#recipe-details');
+const recipesList = document.querySelector('#recipes-list');
+const recipeCount = document.querySelector('#recipe-count');
 
 export const renderRecipes = (recipes) => {
-  const recipesList = document.querySelector('#recipes-list');
-  const recipeCount = document.querySelector('#recipe-count');
-
   // Clear the old list before rendering the new one
   recipesList.innerHTML = '';
   recipeCount.textContent = recipes.length;
@@ -28,7 +28,6 @@ export const renderRecipes = (recipes) => {
 };
 
 export const renderRecipeDetails = (recipe) => {
-  const detailsSection = document.querySelector('#recipe-details');
   detailsSection.classList.remove('hidden');
 
   // Clear old details and show the section

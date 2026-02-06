@@ -5,7 +5,8 @@ A live-coding review app that covers DOM manipulation, fetching with `.then()`/`
 **API:** https://dummyjson.com/recipes
 
 - [Setup](#setup)
-- [Walkthrough](#walkthrough)
+- [Overview](#overview)
+- [Building from Scratch](#building-from-scratch)
   - [Step 0: Tour the starter code](#step-0-tour-the-starter-code)
   - [Step 1: Create `src/fetch-helpers.js` — fetch a list of recipes](#step-1-create-srcfetch-helpersjs--fetch-a-list-of-recipes)
   - [Step 2: Import and test in `main.js`](#step-2-import-and-test-in-mainjs)
@@ -15,6 +16,10 @@ A live-coding review app that covers DOM manipulation, fetching with `.then()`/`
   - [Step 6: Add the click handler with event delegation](#step-6-add-the-click-handler-with-event-delegation)
   - [Step 7: Add `renderRecipeDetails` to `dom-helpers.js`](#step-7-add-renderrecipedetails-to-dom-helpersjs)
   - [Step 8 (Bonus): Add error rendering](#step-8-bonus-add-error-rendering)
+- [Explore the Solution](#explore-the-solution)
+  - [Guided Reading Questions](#guided-reading-questions)
+  - [Code Investigation](#code-investigation)
+  - [Trace the Flow](#trace-the-flow)
 - [Concepts Checklist](#concepts-checklist)
 
 
@@ -25,7 +30,19 @@ npm i
 npm run dev
 ```
 
-## Walkthrough
+## Overview
+
+The process for creating an interactive and data-driven user interface typically follows this order of development operations:
+1. Create the HTML with `id` and `class` attributes so we can target elements. Leave empty containers for content generated with JavaScript/DOM manipulation.
+2. Create functions for fetching data. Test the fetch with console.logs.
+3. Create functions for rendering components. Data (input) -> rendered to the DOM
+4. Connect the data source to the rendering functions. This can look like:
+   - The page loads → fetch → render
+   - User triggers an event → fetch → render
+   - A user fills out a form → extract data from the form → fetch → render (we'll cover handling forms later)
+
+
+## Building from Scratch
 
 ### Step 0: Tour the starter code
 
@@ -65,7 +82,7 @@ export const getRecipes = () => {
 };
 ```
 
-**Talk through:**
+**Key Details:**
 - `fetch()` returns a Promise. We chain `.then()` to handle it.
 - Why we check `response.ok` — fetch doesn't reject on 404/500, only on network errors.
 - `response.json()` also returns a Promise — we must `return` it so the next `.then()` gets the data.
@@ -120,7 +137,7 @@ export const renderRecipes = (recipes) => {
 };
 ```
 
-**Talk through:**
+**Key Details:**
 - `innerHTML = ''` clears the hardcoded fallback card so we can replace it with real data.
 - `dataset.recipeId` sets `data-recipe-id` on the element — we'll read this later when the user clicks.
 - Create → Modify → Append pattern for each element.
@@ -165,7 +182,7 @@ export const getRecipeById = (id) => {
 };
 ```
 
-**Talk through:** Same pattern as `getRecipes` but with a dynamic `id` in the URL. No need to extract a nested property — the API returns the recipe object directly.
+**Key Details:** Same pattern as `getRecipes` but with a dynamic `id` in the URL. No need to extract a nested property — the API returns the recipe object directly.
 
 ### Step 6: Add the click handler with event delegation
 
@@ -195,7 +212,7 @@ recipesList.addEventListener('click', (event) => {
 });
 ```
 
-**Talk through:**
+**Key Details:**
 - One listener on the `ul`, not one per `li` — this is **event delegation**.
 - `event.target` is whatever was actually clicked (could be the `img`, `h3`, or `p` inside the `li`).
 - `event.target.closest('li')` walks up the DOM to find the `li` ancestor.
@@ -240,7 +257,7 @@ export const renderRecipeDetails = (recipe) => {
 };
 ```
 
-**Talk through:**
+**Key Details:**
 - `classList.remove('hidden')` makes the section visible (it starts with `class="hidden"` in the HTML).
 - `innerHTML = ''` clears the previous recipe's details before rendering the new one.
 - Same create/modify/append pattern, just more elements.
@@ -268,6 +285,67 @@ export const renderError = (msg) => {
 ```
 
 Then update `main.js` to use `renderError(...)` instead of `console.log(...)` for the null checks.
+
+## Explore the Solution
+
+The completed solution is in `src-solution/`. Use the exercises below to investigate how the code works before attempting to build it yourself.
+
+### Guided Reading Questions
+
+Open each file and answer the questions.
+
+**`index.html`**
+1. What does `type="module"` on the `<script>` tag enable?
+2. Find the fallback recipe card in the `ul`. What will happen to it once JavaScript loads successfully?
+3. Which elements start with `class="hidden"`? Why would we hide them by default?
+4. What `data-` attribute is on the fallback `<li>`? What value does it have?
+
+**`src-solution/fetch-helpers.js`**
+1. What does `getRecipes` return if the fetch succeeds? What does it return if the fetch fails?
+2. Why do we check `response.ok` instead of just using `.catch()`? (Hint: what HTTP status codes does `fetch` treat as errors vs. not?)
+3. The API returns an object like `{ recipes: [...], total: 50, ... }`. Which `.then()` block extracts just the array, and how?
+4. `getRecipeById` and `getRecipes` follow the same pattern. What is the one structural difference between them? Why doesn't `getRecipeById` need a second `.then()`?
+
+**`src-solution/dom-helpers.js`**
+1. Why does `renderRecipes` set `recipesList.innerHTML = ''` before the `forEach` loop?
+2. What does `li.dataset.recipeId = recipe.id` do to the `<li>` element in the DOM? Inspect a rendered `<li>` in the browser to check.
+3. In `renderRecipeDetails`, what is the purpose of `detailsSection.classList.remove('hidden')`?
+4. How does `renderError` make the error message disappear after 2 seconds?
+
+**`src-solution/main.js`**
+1. What are the two things that trigger a fetch in this file? (Hint: one happens automatically, one requires user interaction.)
+2. Why do we check `if (recipes === null)` after the fetch resolves?
+3. The click handler is attached to the `ul`, not to individual `li` elements. What is this pattern called, and why is it used here?
+
+**<details><summary>Answers</summary>**
+> Answer
+</details>
+
+### Code Investigation
+
+Answer each question by finding the relevant line(s) in the solution files. Write down the file name and line number(s) for each answer.
+
+1. **Find the guard clause.** One function in `main.js` has an early `return` that prevents the rest of the handler from running. What condition triggers it, and what would happen without it?
+2. **Find the data bridge.** When `renderRecipes` creates each `<li>`, it stores something on the element that the click handler reads later. What is being stored, and how does the click handler retrieve it?
+3. **Find the error boundary.** Both fetch helpers return `null` on failure. Find every place in `main.js` where `null` is checked. What happens in each case?
+4. **Count the DOM queries.** How many times does the solution call `document.querySelector`? List each one and which file it's in. Whey are they declared at the top of the file and not inside functions?
+5. **Spot the pattern.** The create → modify → append pattern is used multiple times in `dom-helpers.js`. Pick one element (e.g., the `<img>` in `renderRecipes`) and identify the three lines that make up the pattern.
+
+### Trace the Flow
+
+For each scenario, trace the path through the code across all files. Write down each function call and what it does, in order.
+
+**Scenario 1: The page loads**
+
+Start at `main.js` line 5. What function is called? Follow it into `fetch-helpers.js`. What does it return? Back in `main.js`, what happens in the `.then()`? Follow the call into `dom-helpers.js`. What does the DOM look like when it's done?
+
+**Scenario 2: A user clicks a recipe card**
+
+The user clicks the image inside a recipe `<li>`. Start at `main.js` line 15. What is `event.target`? What does `event.target.closest('li')` return? How does the handler get the recipe ID from that element? Follow the fetch call into `fetch-helpers.js` and the render call into `dom-helpers.js`. What changes on the page?
+
+**Scenario 3: The API is down**
+
+Imagine the API returns a 500 error. Start in `fetch-helpers.js`. Is `response.ok` true or false? What happens next? What value does the function return? Follow that value back to `main.js`. What does the user see?
 
 ## Concepts Checklist
 
